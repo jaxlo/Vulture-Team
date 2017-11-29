@@ -1,6 +1,7 @@
 #By Jackson Lohman 2017
 #To be run by a Raspberry Pi on an RC car
 
+
 import time
 import serial
 
@@ -12,9 +13,7 @@ def headlessRun():
 		var1 = ArduinoCom.receive()
 		ArduinoCom.send(243,200)#replace with vars
 
-
-
-def rcRun():
+def rcPrompt():
 	startRC = input('Start RC mode? (y,n)')
 	if startRC.lower() == 'n' or startRC.lower() == 'no':
 		headlessRun()
@@ -22,8 +21,12 @@ def rcRun():
 		pass
 	else:
 		print('  Type "yes" or "no"')
-		ArduinoCom.rcRun()
+		rcPrompt()
 	#TODO rc code goes here
+
+def rcRun():
+	print('This feature is not available./nRedirecting you to non rc mode')
+	headlessRun()
 
 class ArduinoCom:
 	def connect():#Checks the connection and Connects if not connected
@@ -51,9 +54,13 @@ class ArduinoCom:
 		while True:
 			raw = ser.readline()
 			ArduinoCom.connect()
-			decoded = raw.decode().strip('\r\n')
-			print('Received from the Arduino: '+decoded)
-			return decoded
+			try:#if bits are transmitted incorrectly, it ignores it
+				decoded = raw.decode().strip('\r\n')
+				print('Received from the Arduino: '+decoded)
+				return decoded
+			except UnicodeDecodeError:
+				print('Arduino decode error. Ignoring...')
+
 
 	def send(speedA, speedB):#called to send PWM to the arduino from the pi
 		ArduinoCom.connect()
