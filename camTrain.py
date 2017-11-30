@@ -9,7 +9,6 @@ picam.start_preview()
 sleep(2)
 print('1 = forward\n2 = left\n3 = right\n4 = stop\n5 = random')
 y = input('option number 1,2,3,4, or 5:  ')
-
 x = int(y)
 
 capnum = 0
@@ -39,7 +38,6 @@ elif x == 4:
 
 elif x == 5:
         while True:
-                picam.capture('/home/pi/Documents/stop/testRandom' + str(capnum) + '.jpg')
+                picam.capture('/home/pi/Documents/random/testRandom' + str(capnum) + '.jpg')
                 print('Picture: '+str(capnum) +' taken')
                 capnum += 1
-
