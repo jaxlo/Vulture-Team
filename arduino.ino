@@ -10,16 +10,37 @@
 #define trig 11
 #define echo 3
 
-int motorPwmA = 255;
-int motorPwmB = -200;
+int motorPwmA = 120;
+int motorPwmB = 120;
+int readPwmA;
+int readPwmB;
 
-long duration;
-int distance;
+int debugCounter = 0;
+bool varDebuger = false;
 
-bool newSpeed = true;//starts stopped
+String serialData;
+
+bool newSpeed = false;//starts stopped
 bool ultrasonic = false;//if the ultrasonic distance sensor is enabled or not
 
+String getValue(String data, char separator, int index) {//Thanks to econjack on the Arduino forums
+    int found = 0;
+    int strIndex[] = { 0, -1 };
+    int maxIndex = data.length() - 1;
+
+    for (int i = 0; i <= maxIndex && found <= index; i++) {
+        if (data.charAt(i) == separator || i == maxIndex) {
+            found++;
+            strIndex[0] = strIndex[1] + 1;
+            strIndex[1] = (i == maxIndex) ? i+1 : i;
+        }
+    }
+    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
+
+
 void setup() {
+  
 //motor driver
   pinMode(enA, OUTPUT);
   pinMode(enB, OUTPUT);
@@ -40,14 +61,15 @@ void setup() {
 void loop() {
 
   if(Serial.available() > 0) {
-    char data = Serial.read();
-    char str[2];
-    str[0] = data;
-    str[1] = '\0';
-    Serial.println(str);
+    serialData = Serial.read();
+    String valA = getValue(serialData, 'm', 0);
+    String valB = getValue(serialData, 'm', 1);
+    readPwmA = valA.toInt();
+    readPwmB = valB.toInt();
+    newSpeed = true;
   }
   
-  if (newSpeed = true){
+  if (newSpeed == true){
     
     if (motorPwmA > 0) {
        digitalWrite(in1, HIGH);//ajust this for direction (swap high and low)
@@ -72,32 +94,13 @@ void loop() {
   analogWrite(enB, abs(motorPwmB)); // Send PWM signal to motor B
 
 
-  if (ultrasonic == true)
-    digitalWrite(trig, LOW);
-    delayMicroseconds(2);
+  //if (ultrasonic == true)
+    //add the updated sensor code here
     
-    digitalWrite(trig, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(trig, LOW);
-
-    duration = pulseIn(echo, HIGH);//distance in time to an object
-    
-    distance = duration*0.034/2;//converts to distance in cm
-
-    Serial.println(distance);
-    
-  analogWrite(enA, abs(motorPwmA)); // Send PWM signal to motor A
-  analogWrite(enB, abs(motorPwmB)); // Send PWM signal to motor B
+  if (varDebuger == true){
+    debugCounter++;
+    Serial.println(debugCounter);
+  }
+  
 
 }
-
-
-
-
-
-
-
-
-
-
-
