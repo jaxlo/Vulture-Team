@@ -87,7 +87,7 @@ void loop() {
       digitalWrite(in4, HIGH);
     }
 
-    newSpeed = true;//change to false after testing
+    newSpeed = false;//change to false after testing
   }
   //This needs to run every time to  keep PWM
   analogWrite(enA, abs(motorPwmA)); // Send PWM signal to motor A
