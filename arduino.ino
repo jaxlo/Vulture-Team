@@ -99,6 +99,9 @@ void loop() {
     
   if (varDebuger == true){
     debugCounter++;
+    if (debugCounter == 500){
+        debugCounter = 0;
+    }
     Serial.println(debugCounter);
   }
   
