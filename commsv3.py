@@ -144,5 +144,54 @@ def getArduThread():
 		command = tfCommand()
 		arduino(command)
 
-threading.Thread(target=getArduThread).start()#thread 1
-threading.Thread(target=sendCamThread).start()#thread 2
+def runAll():
+	print(' _____     _ _                   _____               ')
+	print('|  |  |_ _| | |_ _ _ ___ ___ ___|_   _|___ ___ ___ __') 
+	print('|  |  | | | |  _| | |  _| -_|___| | | | -_| . |     |')
+	print(' \___/|___|_|_| |___|_| |___|     |_| |___|__,|_|_|_|')
+	print('                    By Jackson Lohman and TJ Reynolds\n')
+	time.sleep(0)#change to 1
+	print('Starting...')
+	time.sleep(0)#change to .5
+	mainMode = inputScrubber('Select an option:\n  (1)Train NN\n  (2)Run NN\n  (3)RC mode\nEnter [1,2,3]: ', ('1','2','3'), 'Invalid Input\n')
+	if mainMode == '1':
+		trainSaveBool = False
+		while trainSaveBool == False:#be able to re-run the ability to search for USB devices
+			trainSaveLoc = inputScrubber('Select an option:\n  (1)Save to USB drive\n  (2)Save to local filesystem\nEnter [1,2]: ', ('1','2'), 'Invalid Input\n')
+			if trainSaveLoc == '1':
+				if os.path.ismount('/run/media/*/MLtrain') == False:
+					print('No USB drive found\n  Make sure it is called: \"MLtrain\"\n')
+				else:#if the USB drive was foundS
+					trainSaveBool = True
+			else:#if saving to local filesystem
+					trainSaveBool = True
+		if trainSaveLoc == '1':
+			trainSaveFilepathStart = '/run/media/*/MLtrain/'
+		else:
+			trainSaveFilepathStart = '/home/*/MLtrain'
+		trainPrefixQuestion = inputScrubber('Would you like to use an image prefix? [y,n]: ',('y','n'),'InvalidInput\n')
+		if trainPrefixQuestion == 'y':
+			trainSaveFilepathPrefix = input('Enter a prefix: ')
+		camTrainDirectionQuestion = 'Select an option:\n  (1) = forward\n  (2) = left\n  (3) = right\n  (4) = stop\n  (5) = other\nEnter [1,2,3,4,5]: '
+		camTrainDirection = inputScrubber(camTrainDirectionQuestion, ('1','2','3','4','5'),'Invalid Input\n')#used a var because it was too long
+		if camTrainDirection == '1':
+			trainSaveFilepathEnd = 'forward'
+		elif camTrainDirection == '2':
+			trainSaveFilepathEnd = 'turnLeft'
+		elif camTrainDirection == '3':
+			trainSaveFilepathEnd = 'turnRight'
+		elif camTrainDirection == '4':
+			trainSaveFilepathEnd = 'stop'
+		elif camTrainDirection == '5':
+			trainSaveFilepathEnd = 'other'
+		print('feature is yet to be added')
+		#TODO image code
+	if mainMode == '2':
+		threading.Thread(target=getArduThread).start()#thread 1
+		threading.Thread(target=sendCamThread).start()#thread 2
+	if mainMode == '3':
+		print('Purpose of RC Mode = Make sure the arduino is working.')
+		print('feature is yet to be added')
+		#while True:
+			#RCdirection = input('Enter [w,a,s,d]: ')
+			#TODO arduino driving code
