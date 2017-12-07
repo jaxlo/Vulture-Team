@@ -14,6 +14,7 @@ import serial
 import socket
 import time
 import sys
+import os
 
 #Global Vars to change when running (change)
 tfIpAddress = '192.168.0.11'#Where tensorflow is on the local network
@@ -21,6 +22,21 @@ tfIpAddress = '192.168.0.11'#Where tensorflow is on the local network
 
 #program  global vars (do not change)
 imgCounter = 0#pictures taken
+
+def inputScrubber(inputStr, optionTuple, errorStr):#make sure optionTuple is str, not int
+	responce = input(inputStr)
+	x = 0
+	while x <= len(optionTuple):
+		try:
+			if optionTuple[x] == responce:
+				return responce
+			else:
+				x += 1
+		except IndexError:#If the tuple runs out of places to index`
+			x = len(optionTuple) +1
+	if errorStr != 'NOERRORSTR':#make  errorStr == NOERRORSTR for there to be no error strings
+		print(errorStr)
+		inputScrubber(inputStr, optionTuple, errorStr)
 
   ###########################
  # sendCamThread functions #
@@ -33,12 +49,12 @@ def bluescale():
 		picam.capture(currentImg)
 		print('Image :'+str(imgCounter)+' taken.')
 	else:
-		print('Using a local image to send')
+		print('Using a local image')
 		currentImg = 'roadforward90.jpg'#make sure this is in the same file where it is ran
 	loadImg = Image.open(currentImg)
 	cropImg = loadImg.crop((0, 140, 320, 320))
 	pixels = np.array(cropImg.getdata(band=2), dtype=np.uint8)#only gets the blue band of the image
-	pixels.reshape(180,320)#makes it a 2D array
+	pixels.resize(180,320)#makes it a 2D array
 	return pixels
 
 
@@ -150,28 +166,8 @@ def runAll():
 	print('|  |  | | | |  _| | |  _| -_|___| | | | -_| . |     |')
 	print(' \___/|___|_|_| |___|_| |___|     |_| |___|__,|_|_|_|')
 	print('                    By Jackson Lohman and TJ Reynolds\n')
-	time.sleep(0)#change to 1
-	print('Starting...')
-	time.sleep(0)#change to .5
 	mainMode = inputScrubber('Select an option:\n  (1)Train NN\n  (2)Run NN\n  (3)RC mode\nEnter [1,2,3]: ', ('1','2','3'), 'Invalid Input\n')
 	if mainMode == '1':
-		trainSaveBool = False
-		while trainSaveBool == False:#be able to re-run the ability to search for USB devices
-			trainSaveLoc = inputScrubber('Select an option:\n  (1)Save to USB drive\n  (2)Save to local filesystem\nEnter [1,2]: ', ('1','2'), 'Invalid Input\n')
-			if trainSaveLoc == '1':
-				if os.path.ismount('/run/media/*/MLtrain') == False:
-					print('No USB drive found\n  Make sure it is called: \"MLtrain\"\n')
-				else:#if the USB drive was foundS
-					trainSaveBool = True
-			else:#if saving to local filesystem
-					trainSaveBool = True
-		if trainSaveLoc == '1':
-			trainSaveFilepathStart = '/run/media/*/MLtrain/'
-		else:
-			trainSaveFilepathStart = '/home/*/MLtrain'
-		trainPrefixQuestion = inputScrubber('Would you like to use an image prefix? [y,n]: ',('y','n'),'InvalidInput\n')
-		if trainPrefixQuestion == 'y':
-			trainSaveFilepathPrefix = input('Enter a prefix: ')
 		camTrainDirectionQuestion = 'Select an option:\n  (1) = forward\n  (2) = left\n  (3) = right\n  (4) = stop\n  (5) = other\nEnter [1,2,3,4,5]: '
 		camTrainDirection = inputScrubber(camTrainDirectionQuestion, ('1','2','3','4','5'),'Invalid Input\n')#used a var because it was too long
 		if camTrainDirection == '1':
@@ -184,14 +180,37 @@ def runAll():
 			trainSaveFilepathEnd = 'stop'
 		elif camTrainDirection == '5':
 			trainSaveFilepathEnd = 'other'
-		print('feature is yet to be added')
+		trainSaveFilepathPrefix = ''#if prefix is disabled, it is nothing
+		trainPrefixQuestion = inputScrubber('Would you like to use an image prefix? [y,n]: ',('y','n'),'InvalidInput\n')
+		if trainPrefixQuestion == 'y':
+			trainSaveFilepathPrefix = input('Enter a prefix: ')
+		input('Press CTRL-C to quit taking pictures\nPress ENTER to continue\n')
+		print('Starting...')
+		pixels = bluescale()
+		trainImg = Image.fromarray(pixels)
+		if camSupport == True:
+			user = 'pi'
+		else:
+			user = 'jax'
+		trainImg.save('/home/'+user+'/Documents/MLtrain/'+trainSaveFilepathEnd+'/'+trainSaveFilepathPrefix+trainSaveFilepathEnd+str(imgCounter)+'.jpg')
 		#TODO image code
 	if mainMode == '2':
+		#tf ip addr choice
 		threading.Thread(target=getArduThread).start()#thread 1
 		threading.Thread(target=sendCamThread).start()#thread 2
 	if mainMode == '3':
-		print('Purpose of RC Mode = Make sure the arduino is working.')
-		print('feature is yet to be added')
-		#while True:
-			#RCdirection = input('Enter [w,a,s,d]: ')
-			#TODO arduino driving code
+		print('List of commands:\n(WASD)\n  w-forward\n  a-left\n  d-right\n  s-stop\nUse CTRL-C to exit\n')
+		while True:
+			RCdirection = inputScrubber('Enter [w,a,s,d]: ', ('w','a','s','d'), 'Invalid Input')
+			if RCdirection == 'w':
+				arduino(1)
+			elif RCdirection == 'a':
+				arduino(2)
+			elif RCdirection == 's':
+				arduino(3)
+			elif RCdirection == 'd':
+				arduino(4)
+
+
+runAll()
+
