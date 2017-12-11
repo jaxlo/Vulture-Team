@@ -10,37 +10,28 @@
 #define trig 11
 #define echo 3
 
-int motorPwmA = 120;
-int motorPwmB = 120;
-int readPwmA;
-int readPwmB;
-
 int debugCounter = 0;
 bool varDebuger = false;
 
-String serialData;
+const byte numChars = 32;
+char receivedChars[numChars];
+char tempChars[numChars];
 
-bool newSpeed = false;//starts stopped
+// variables to hold the parsed data
+char messageFromPC[numChars] = {0};
+int serialPwmA = 0;
+int serialPwmB = 0;
+
+boolean newData = false;
+
+bool newSpeed = false;//starts stopped --- change to true if you want it to go without the Raspberry Pi
 bool ultrasonic = false;//if the ultrasonic distance sensor is enabled or not
 
-String getValue(String data, char separator, int index) {//Thanks to econjack on the Arduino forums
-    int found = 0;
-    int strIndex[] = { 0, -1 };
-    int maxIndex = data.length() - 1;
-
-    for (int i = 0; i <= maxIndex && found <= index; i++) {
-        if (data.charAt(i) == separator || i == maxIndex) {
-            found++;
-            strIndex[0] = strIndex[1] + 1;
-            strIndex[1] = (i == maxIndex) ? i+1 : i;
-        }
-    }
-    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
-
+//For some reason, backing up does not work 100%. 
+//TODO add weather to take true or false to turn on or off the distance sensor
 
 void setup() {
-  
+
 //motor driver
   pinMode(enA, OUTPUT);
   pinMode(enB, OUTPUT);
@@ -55,34 +46,38 @@ void setup() {
   
 //USB connection
   Serial.begin(9600);
+  Serial.println("Enter data in this style <HelloWorld, 12, 24.7>  ");
 }
 
-
 void loop() {
-
-  if(Serial.available() > 0) {
-    serialData = Serial.read();
-    String valA = getValue(serialData, 'm', 0);
-    String valB = getValue(serialData, 'm', 1);
-    readPwmA = valA.toInt();
-    readPwmB = valB.toInt();
-    newSpeed = true;
-  }
   
+  recvWithStartEndMarkers();
+  if (newData == true) {
+    strcpy(tempChars, receivedChars);
+    // this temporary copy is necessary to protect the original data
+    //   because strtok() used in parseData() replaces the commas with \0
+    parseData();
+    //showParsedData();
+    newData = false;
+    newSpeed = true;    
+    Serial.println(serialPwmA);//remove
+    Serial.println(serialPwmB);//remove
+  }
+
   if (newSpeed == true){
     
-    if (motorPwmA > 0) {
+    if (serialPwmA > 0) {
        digitalWrite(in1, HIGH);//ajust this for direction (swap high and low)
        digitalWrite(in2, LOW);//
-    } else if (motorPwmA < 0) {//negative PWM means that the motors go backwords
+    } else if (serialPwmA < 0) {//negative PWM means that the motors go backwords
       digitalWrite(in2, LOW);
       digitalWrite(in2, HIGH);
     }
 
-    if (motorPwmB > 0) {
+    if (serialPwmB > 0) {
       digitalWrite(in3, HIGH);//ajust this for direction (swap high and low)
       digitalWrite(in4, LOW);
-    } else if (motorPwmB < 0) {//negative PWM means that the motors go backwords
+    } else if (serialPwmB < 0) {//negative PWM means that the motors go backwords
       digitalWrite(in4, LOW);
       digitalWrite(in4, HIGH);
     }
@@ -90,8 +85,8 @@ void loop() {
     newSpeed = false;//change to false after testing
   }
   //This needs to run every time to  keep PWM
-  analogWrite(enA, abs(motorPwmA)); // Send PWM signal to motor A
-  analogWrite(enB, abs(motorPwmB)); // Send PWM signal to motor B
+  analogWrite(enA, abs(serialPwmA)); // Send PWM signal to motor A
+  analogWrite(enB, abs(serialPwmB)); // Send PWM signal to motor B
 
 
   //if (ultrasonic == true)
@@ -104,6 +99,54 @@ void loop() {
     }
     Serial.println(debugCounter);
   }
-  
 
 }
+
+//functions moded from Robin2 on the arduino forums
+void recvWithStartEndMarkers() {
+    static boolean recvInProgress = false;
+    static byte ndx = 0;
+    char startMarker = '<';
+    char endMarker = '>';
+    char rc;
+
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
+
+        if (recvInProgress == true) {
+            if (rc != endMarker) {
+                receivedChars[ndx] = rc;
+                ndx++;
+                if (ndx >= numChars) {
+                    ndx = numChars - 1;
+                }
+            }
+            else {
+                receivedChars[ndx] = '\0'; // terminate the string
+                recvInProgress = false;
+                ndx = 0;
+                newData = true;
+            }
+        }
+
+        else if (rc == startMarker) {
+            recvInProgress = true;
+        }
+    }
+}
+
+
+void parseData() {// split the data into its parts
+
+    char * strtokIndx; // this is used by strtok() as an index
+
+    strtokIndx = strtok(tempChars,",");      // get the first part - the string
+    strcpy(messageFromPC, strtokIndx); // copy it to messageFromPC
+ 
+    strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
+    serialPwmA = atoi(strtokIndx);     // convert this part to an integer
+
+    strtokIndx = strtok(NULL, ",");
+    serialPwmB = atoi(strtokIndx);     // convert this part to an intager (was float)
+
+} 
