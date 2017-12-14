@@ -68,8 +68,10 @@ def sendImg(image):
 	server_address = (tfIpAddress, 10000)#change to the Tensorflow computer's address add a try statement?
 	print('Connecting to Tensorflow')# use this for the IP on the tensorflow side
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sendOrder = str(order).encode()
 	try:
 		sock.connect(server_address)
+		sock.send(sendOrder)
 	except OSError:
 		print('Could not send image to Tensorflow')
 		time.sleep(.1)
@@ -87,19 +89,13 @@ def sendCamThread():
 
 def tfCommand():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	server_address = (socket.gethostbyname(socket.gethostname()), 10000)
-	sock.bind(server_address)
+	sock.bind((socket.gethostbyname(socket.gethostname()), 10000))
 	sock.listen(1)
 	print('Waiting for Tensorflow orders...')
 	while True:
 		connection, client_address = sock.accept()
-		#try
-		get = connection.recev(999)#TODO run this to see what is wrong and how to fix it
-		#connection.close()  except
-		#try -- next tab up 
+		get = connection.recev(999)
 		data = pickle.loads(get)
-		#except
-		#data = str(get)
 		print('Order Received: '+str(get))
 		return get
 
@@ -116,13 +112,13 @@ def brain(command, distance):#optimize values when it is working
 		print('Moving Forward...')
 		return pwmA, pwmB
 	elif command == 2:#turn left
-		pwmA = 0#HERE
-		pwmB = 255#HERE
+		pwmA = 0
+		pwmB = 255
 		print('Turning Left...')
 		return pwmA, pwmB
 	elif command == 3:#turn right
-		pwmA = 255#HERE
-		pwmB = 0#HERE
+		pwmA = 255
+		pwmB = 0
 		print('Turning Right...')
 		return pwmA, pwmB
 	else:#this should not run
@@ -146,7 +142,7 @@ def connectArduinoSer():
 	if arduinoFoundSer == False:
 		print('Arduino not found\n  Will try again in 3s')#when the while loop is over
 		time.sleep(3)
-		connectArduino(command)
+		connectArduinoSer(command)
 
 
 def arduino(command):
@@ -178,6 +174,8 @@ def getArduThread():
 
 def runAll():
 	connectArduinoSer()
+	print('Starting...')#give the arduino time to start
+	time.sleep(7)
 	print(' _____     _ _                   _____               ')
 	print('|  |  |_ _| | |_ _ _ ___ ___ ___|_   _|___ ___ ___ __') 
 	print('|  |  | | | |  _| | |  _| -_|___| | | | -_| . |     |')
@@ -235,4 +233,3 @@ def runAll():
 				arduino(3)
 
 runAll()
-
