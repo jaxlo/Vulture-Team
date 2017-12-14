@@ -10,9 +10,9 @@ def sendOrder(order):#works
 	server_address = (carIpAddress, 10000)#change to the Tensorflow computer's address add a try statement?
 	print('Connecting to the car')# use this for the IP on the tensorflow side
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sendOrder = str(order).encode()
 	try:
 		sock.connect(server_address)
-		sendOrder = str(order).encode()
 		sock.send(sendOrder)
 	except OSError:
 		print('Could not send image to the car')
@@ -28,5 +28,5 @@ def getImage():
 	while True:
 		connection, carIpAddress = sock.accept()
 		get = connection.recev(999)#TODO run this to see what is wrong and how to fix it
-		print('Order Received: '+str(get))
+		print('Image received from the car')
 		return get
