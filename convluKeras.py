@@ -68,6 +68,10 @@ print('y_test: ', y_test)
 print(appendCountTrain)
 print(x_train.shape)
 
+y_train = keras.utils.to_categorical(y_train, num_classes = 4)
+print(y_train)
+
+
 #print(str(y_train))
 	#add to numpy array
 if True:
