@@ -1,5 +1,4 @@
 #from https://keras.io/getting-started/sequential-model-guide/#examples
-
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
@@ -14,46 +13,62 @@ import os
 x_train = np.array([])
 y_train = []
 x_test = np.array([])
-y_test = ()
+y_test = []
 appendCountTrain = 0
+appendCountTest = 0
+
 
 #change from real and fake data
 def loadImgs(filepath):
-	global x_train, y_train, x_test, y_test
-	imageFilepathSections = ('/forward','/turnLeft','/turnRight','/stop','/trainRandom')
-	imageDirectoryFilepath = filepath
-	appendCountTrain = 0
-	appendCountTest = 0
-	#x_train = np.array([])
-	for folder in imageFilepathSections:
-		currentFileFolder = (imageDirectoryFilepath+folder)#loops through each folder
-		for pic in glob.glob(currentFileFolder+'/*.jpg'):
-			loadImg = Image.open(pic)
-			pixels = np.array(loadImg, dtype=np.float32)
-			pixels /= 255#makes it 0-1 and it is faster
-			if folder != '/trainRandom':
-				if appendCountTrain != 0:
-					x_train = np.concatenate((x_train, pixels))
-				else:
-					x_train = pixels
-				if folder == '/forward': y_train += [0]
-				if folder == '/turnLeft': y_train += [1]
-				if folder == '/turnRight': y_train += [2]
-				if folder == '/stop': y_train += [3]
-				appendCountTrain += 1
-			if folder == '/trainRandom':
-				appendCountTest += 1
-				#put similar code here when finished with the train
-		print(' Loaded: '+folder.strip('/')+' Images')
-	x_train.reshape(180, 320, appendCountTrain)#make another for x test
-	#x_train.reshape((appendCountTrain, 57600))#make another for x test
-	print(str(x_train)+'\n')
+    global x_train, y_train, x_test, y_test, appendCountTrain, appendCountTest, pixels
+    imageFilepathSections = ('\\forward','\\turnLeft','\\turnRight','\\stop','\\trainRandom')
+    imageDirectoryFilepath = filepath
+    appendCountTrain = 0
+    appendCountTest = 0
+    #x_train = np.array([])
+    for folder in imageFilepathSections:
+        currentFileFolder = (imageDirectoryFilepath+folder)#loops through each folder
+        for pic in glob.glob(currentFileFolder+'\\*.jpg'):
+            loadImg = Image.open(pic)
+            pixels = np.array(loadImg, dtype=np.float32)
+            pixels /= 255#makes it 0-1 and it is faster
+            #print(pixels)
+            if folder != '\\trainRandom':
+                if appendCountTrain != 0:
+                    #x_train += pixels
+                    x_train = np.append(x_train, pixels)
+                else:
+                    x_train = pixels
+                if folder == '\\forward': y_train += [0]
+                if folder == '\\turnLeft': y_train += [1]
+                if folder == '\\turnRight': y_train += [2]
+                if folder == '\\stop': y_train += [3]
+                appendCountTrain += 1
+            if folder == '\\trainRandom':
+                appendCountTest += 1
+                #put similar code here when finished with the train
+        print(' Loaded: '+folder.strip('\\')+' Images')
+    x_train.shape = (-1, 320, 180, 1)
+    print(x_train.shape)
 
+'''
+        print('Before'+str(pixels))
+        x_train.reshape(appendCountTrain,320,180,1)
+        print('After'+str(pixels))
+'''
+    #x_train.reshape((appendCountTrain, 57600))#make another for x test
 
 print(x_test.dtype)
 
-loadImgs('/run/media/jax/DualOS/CompSci/finalCar/formattedData/format11-4-17')
-print(str(y_train))
+loadImgs('C:\\Users\\reyno\\Downloads\\BluescaleImages\\BluescaleImages')
+print('x_train: ', x_train)
+print('y_train: ', y_train)
+print('x_test: ', x_test)
+print('y_test: ', y_test)
+print(appendCountTrain)
+print(x_train.shape)
+
+#print(str(y_train))
 	#add to numpy array
 if True:
 	pass
@@ -71,30 +86,41 @@ if True:
 	#print('\n\ny_test:'+str(y_test))
 	#fake training data  (for formatting)-----------------------------------------------------------------
 
+	
 x_train = np.random.random((100, 100, 100, 1))#1 was 3
 y_train = keras.utils.to_categorical(np.random.randint(10, size=(100, 1)), num_classes=10)
 x_test = np.random.random((20, 100, 100, 3))
 y_test = keras.utils.to_categorical(np.random.randint(10, size=(20, 1)), num_classes=10)
 '''
 model = Sequential()
-model.add(Dense(57600, input_shape=(320, 180), activation='relu'))#input layer
-#              Input nodes     Expected Input number
+model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(320, 180, 1)))
+model.add(Conv2D(32, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
 
-model.add(Dense(28800, activation='relu'))#hidden layer
-#             8 middle layer nodes
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
 
-model.add(Dense(3, activation='sigmoid'))
-#numbers of output layers
+model.add(Flatten())
+model.add(Dense(256, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(4, activation='softmax'))
 
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-model.fit(x_train, y_train, epochs=5, batch_size=appendCountTrain)
+sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+model.compile(loss='categorical_crossentropy', optimizer=sgd)
 
-scores = model.evaluate(x_train, y_train)
-print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+model.fit(x_train, y_train, batch_size=appendCountTrain, epochs=10)
+score = model.evaluate(x_train, y_train, batch_size=appendCountTrain)         #does it work?
+#score = model.evaluate(x_test, y_test, batch_size=appendCountTest)         real testing
+print("\n%s: %.2f%%" % (model.metrics_names[1], score[1]*100))
+
 #prediction
 
-#score = model.evaluate(x_test, y_test, batch_size=32)
+#score = model.evaluate(x_test, y_test, batch_size=20)
 #print(score)
 
 #model.save('modelv1.h5')
 #convert the outputs to what matches the car
+
