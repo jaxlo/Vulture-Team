@@ -27,7 +27,7 @@ def findUserSlash():
 	elif user == '2':
 		slash = '/'#linux is better lol (yet tensorflow(running in backgrund) is optimized for windows, lol)
 		print('Hello, Jackson\nSlash: '+slash)
-	elif user == '3':#lower confusing errors if the input is invalid later
+	elif user == '3':
 		slash = '\\'
 		print('Hello, Kevin\nSlash: '+slash)
 	else:
