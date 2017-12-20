@@ -17,7 +17,8 @@ y_test = []
 appendCountTrain = 0
 appendCountTest = 0
 
-batch_size = 27
+batch_size = 20
+epochs = 10
 
 def findUserSlash():
 	user = str(input('Who are you? (For the correct filepath)\n  (1)TJ\n  (2)Jackson\n  (3)Kevin\nEnter [1,2,3]: '))
@@ -27,7 +28,7 @@ def findUserSlash():
 	elif user == '2':
 		slash = '/'#linux is better lol (yet tensorflow(running in backgrund) is optimized for windows, lol)
 		print('Hello, Jackson\nSlash: '+slash)
-	elif user == '3':
+	elif user == '3':#lower confusing errors if the input is invalid later
 		slash = '\\'
 		print('Hello, Kevin\nSlash: '+slash)
 	else:
@@ -64,7 +65,7 @@ def loadImgs():
 			pixels /= 255#makes it 0-1 and it is faster
 			#print(pixels)
 			if folder != (slash+'trainRandom'):
-				if appendCountTrain != batch_size:
+				if appendCountTrain != 0:
 					#x_train += pixels
 					x_train = np.append(x_train, pixels)
 				else:
@@ -102,6 +103,9 @@ def loadImgs():
 
 loadImgs()
 
+y_train = keras.utils.to_categorical(y_train, num_classes = 4)
+y_test = keras.utils.to_categorical(y_test, num_classes = 4)
+
 print(x_test.dtype)
 print('x_train: ', x_train)
 print('y_train: ', y_train)
@@ -111,10 +115,7 @@ print(appendCountTrain)
 print(appendCountTest)
 print(x_train.shape)
 
-y_train = keras.utils.to_categorical(y_train, num_classes = 4)
-y_test = keras.utils.to_categorical(y_test, num_classes = 4)
-print('y_train: ', y_train)
-print('y_test: ', y_test)
+
 
 model = Sequential()#uncomment this------------------------------------------------------------------------
 model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(320, 180, 1)))
@@ -135,9 +136,9 @@ model.add(Dense(4, activation='softmax'))
 sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(loss='categorical_crossentropy', optimizer=sgd)
 
-model.fit(x_train, y_train, batch_size=20, epochs=10)
+model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
 #score = model.evaluate(x_train, y_train, batch_size=appendCountTrain)         #does it work? 
-score = model.evaluate(x_test, y_test, batch_size=20)         #real testing
+score = model.evaluate(x_test, y_test, batch_size=batch_size)         #real testing
 print(score)
 
 #prediction
@@ -146,3 +147,4 @@ print(score)
 #print(score)
 
 model.save('FirstDatasetv1.h5')#change to match what we are saving
+
