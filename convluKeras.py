@@ -7,6 +7,7 @@ from PIL import Image
 import numpy as np
 import glob
 import os
+import h5py
 
 x_train = np.array([])
 y_train = []
