@@ -7,8 +7,6 @@ from PIL import Image
 import numpy as np
 import glob
 import os
-#np.set_printoptions(threshold=np.nan)
-#user = 0
 
 x_train = np.array([])
 y_train = []
@@ -17,7 +15,7 @@ y_test = []
 appendCountTrain = 0
 appendCountTest = 0
 
-batch_size = 20
+batch_size = 50
 epochs = 10
 
 def findUserSlash():
@@ -36,14 +34,13 @@ def findUserSlash():
 		findUserSlash()
 	return user, slash
 
-#change from real and fake data
 def loadImgs():
 	global x_train, y_train, x_test, y_test, appendCountTrain, appendCountTest, pixels
 	
 	user, slash = findUserSlash()
 	print(user, slash)
 	if slash == '\\' and user == '1':
-		filepath = 'C:\\Users\\reyno\\Downloads\\BluescaleImages\\BluescaleImages'
+		filepath = 'C:\\Users\\reyno\\Downloads\\finalTrainingData\\finalTrainingData\\format12-11-17'
 		print(filepath)
 	elif slash == '\\' and user == '3':
 		filepath = ''
@@ -61,6 +58,7 @@ def loadImgs():
 		currentFileFolder = (imageDirectoryFilepath+folder)#loops through each folder
 		for pic in glob.glob(currentFileFolder+slash+'*.jpg'):
 			loadImg = Image.open(pic)
+			print(pic)
 			pixels = np.array(loadImg, dtype=np.float32)
 			pixels /= 255#makes it 0-1 and it is faster
 			#print(pixels)
@@ -80,10 +78,19 @@ def loadImgs():
 					x_test = np.append(x_test, pixels)
 				else:
 					x_test = pixels
-				if pic.find('forward') == -1: y_test += [0]
-				elif pic.find('left') == -1: y_test += [1]
-				elif pic.find('right') == -1: y_test += [2]
-				elif pic.find('stop') == -1: y_test += [3]
+				if pic.find('forward') >= 0:
+					y_test += [0]
+					print('forward')
+				
+				elif pic.find('left') >= 0  or pic.find('Left') >= 0:
+					y_test += [1]
+					print('left')
+				elif pic.find('right') >= 0 or pic.find('Right') >= 0:
+					y_test += [2]
+					print('right')
+				elif pic.find('stop') >= 0:
+					y_test += [3]
+					print('stop')
 				appendCountTest += 1
 				#put similar code here when finished with the train
 		print('Loaded: '+folder.strip(slash)+' Images')
@@ -92,13 +99,6 @@ def loadImgs():
 	x_test.shape = (-1, 320, 180, 1)
 	print(x_train.shape)
 	print(x_test.shape)
-
-'''
-		print('Before'+str(pixels))
-		x_train.reshape(appendCountTrain,320,180,1)
-		print('After'+str(pixels))
-'''
-	#x_train.reshape((appendCountTrain, 57600))#make another for x test
 
 
 loadImgs()
@@ -137,14 +137,10 @@ sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(loss='categorical_crossentropy', optimizer=sgd)
 
 model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
-#score = model.evaluate(x_train, y_train, batch_size=appendCountTrain)         #does it work? 
 score = model.evaluate(x_test, y_test, batch_size=batch_size)         #real testing
 print(score)
 
 #prediction
-
-#score = model.evaluate(x_test, y_test, batch_size=20)
-#print(score)
 
 model.save('FirstDatasetv1.h5')#change to match what we are saving
 
