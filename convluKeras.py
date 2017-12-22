@@ -58,7 +58,6 @@ def loadImgs():
 		currentFileFolder = (imageDirectoryFilepath+folder)#loops through each folder
 		for pic in glob.glob(currentFileFolder+slash+'*.jpg'):
 			loadImg = Image.open(pic)
-			print(pic)
 			pixels = np.array(loadImg, dtype=np.float32)
 			pixels /= 255#makes it 0-1 and it is faster
 			#print(pixels)
@@ -84,17 +83,18 @@ def loadImgs():
 				
 				elif pic.find('left') >= 0  or pic.find('Left') >= 0:
 					y_test += [1]
-					print('left')
+					#print('left')
 				elif pic.find('right') >= 0 or pic.find('Right') >= 0:
 					y_test += [2]
-					print('right')
+					#print('right')
 				elif pic.find('stop') >= 0:
 					y_test += [3]
-					print('stop')
+					#print('stop')
 				appendCountTest += 1
 				#put similar code here when finished with the train
 		print('Loaded: '+folder.strip(slash)+' Images')
-	print(appendCountTrain, 'aaaa')
+	print(appendCountTrain)
+	print(y_test)
 	x_train.shape = (-1, 320, 180, 1)
 	x_test.shape = (-1, 320, 180, 1)
 	print(x_train.shape)
@@ -143,4 +143,3 @@ print(score)
 #prediction
 
 model.save('FirstDatasetv1.h5')#change to match what we are saving
-
