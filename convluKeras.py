@@ -19,17 +19,21 @@ appendCountTest = 0
 batch_size = 50
 epochs = 10
 
+
 def findUserSlash():
-	user = str(input('Who are you? (For the correct filepath)\n  (1)TJ\n  (2)Jackson\n  (3)Kevin\nEnter [1,2,3]: '))
+	user1 = str(input('user 1 name'))
+	user2 = str(input('user 2 name'))
+	user1 = str(input('user 2 name'))
+	user = str(input('Who are you? (For the correct filepath)\n  (1)user1\n  (2)user2\n  (3)user3\nEnter [1,2,3]: '))
 	if user == '1':#lower confusing errors if the input is invalid later
-		slash = '\\'
-		print('Hello, TJ\nSlash: '+slash)
+		slash = '\\' #change to / if user system is linux or mac_os
+		print('Hello, user1\nSlash: '+slash)
 	elif user == '2':
-		slash = '/'#linux is better lol (yet tensorflow(running in backgrund) is optimized for windows, lol)
-		print('Hello, Jackson\nSlash: '+slash)
-	elif user == '3':#lower confusing errors if the input is invalid later
-		slash = '\\'
-		print('Hello, Kevin\nSlash: '+slash)
+		slash = '/' #change to \\ if user system is windows
+		print('Hello, user2\nSlash: '+slash)
+	elif user == '3':
+		slash = '\\' #change to / if user system is linux or mac_os
+		print('Hello, user3\nSlash: '+slash)
 	else:
 		print('Invalid Input\n')
 		findUserSlash()
@@ -40,14 +44,14 @@ def loadImgs():
 	
 	user, slash = findUserSlash()
 	print(user, slash)
-	if slash == '\\' and user == '1':
-		filepath = 'C:\\Users\\reyno\\Downloads\\finalTrainingData\\finalTrainingData\\format12-11-17'
+	if user == '1':
+		filepath = '' #add user1 filepath
 		print(filepath)
-	elif slash == '\\' and user == '3':
-		filepath = ''
+	elif user == '2':
+		filepath = '' #add user2 filepath
 		print(filepath)
 	else:
-		filepath = '/run/media/jax/DualOS/CompSci/finalCar/formattedData/format11-4-17'
+		filepath = '' #add user3 filepath
 		print(filepath)
 		
 	imageFilepathSections = (slash+'forward',slash+'turnLeft',slash+'turnRight',slash+'stop',slash+'trainRandom')
@@ -138,10 +142,10 @@ sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 model.compile(loss='categorical_crossentropy', optimizer=sgd)
 
 model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
-score = model.evaluate(x_test, y_test, batch_size=batch_size)         #real testing
+score = model.evaluate(x_test, y_test, batch_size=batch_size)
 print(score)
 
-#prediction
+#saving
 
 model.save('FirstDatasetv1.h5')#change to match what we are saving
 
