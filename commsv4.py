@@ -1,7 +1,7 @@
 #Made for Python 3, By Jackson Lohman and TJ Reynolds
 #To be run by a Raspberry Pi on an RC car
 
-serverAddress = '192.168.1.101'#Where the ML server is on the local network
+NetworkHost = '192.168.1.102'#Where the ML server is on the local network
 
 #global variables
 imgCounter = 0
@@ -48,19 +48,7 @@ else:
 	else:
 		arduinoSupport = True
 		print('Arduino Enabled')
-try:
-		import socket
-except ModuleNotFoundError:
-	serverSupport = False
-	print('ML Server Disabled')
-else:
-	serverChoice = inputScrubber('Enable ML Server? [y/n]: ',('y','n'), 'Enter y or n')
-	if serverChoice == 'n' or serverChoice == 'N':
-		serverSupport = False
-		print('ML Server Disabled')
-	else:
-		serverSupport = True
-		print('ML Server Enabled')
+import socket
 from PIL import Image
 import numpy as np
 import pickle
@@ -70,7 +58,7 @@ import os
 
 def piCam(filepath):#filepath = None if it should make a random picture -- Example: piCam('/run/someDirectionForAName') -- (do not add .jpg)
 	global imgCounter#to use outside of the program, make a global var 0 
-	imgCounter += 1
+	imgCounter += 1#incraments before the picture. It starts counting with 1
 	if filepath != None:
 		currentImg = str(filepath)+str(imgCounter)+'.jpg'#adds image number and filepath
 		picam.capture(currentImg)
@@ -82,106 +70,108 @@ def piCam(filepath):#filepath = None if it should make a random picture -- Examp
 	else:
 		print('Using a random image')
 		pixels = np.random.rand(180,320)
+		time.sleep(.5)#make it act more like the cam in speed
 		print('Image :'+str(imgCounter)+' made.')
 	return pixels
 
-def sendImg(ipAddress, imageArray):
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	server_address = (serverAddress, 10000)#change to the ML server address add a try statement?
-	print('Connecting to ML Server...')
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sent = False
-	while sent == False:#loops until socket can send
-		try:
-			sock.sendall(serialized)#COPPY -- change after testing TODO
-		except OSError:
-			print('Could not send image to ML Server')#delete if it spams the terminal
-			time.sleep(.1)
-		else:
-			serialized = pickle.dumps(imageArray, protocol=0)
-			#sock.sendall(serialized)#COPPY -- change after testing TODO
-			print('Image sent to ML Server')
-			sent = True#exits the loop
+class NetworkServer:#run on the pi
+    def __init__(self, sock=None, port=NetworkPort):
+        if sock is None:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.bind(('', NetworkPort))#allow any ip
+            self.sock.listen(1)#limit connection to one client
+            print('Waiting for the ML client')
+            self.conn, addr = self.sock.accept()
+            print('New connection from: [add later]')#+str(self.sock.getpeername()))
+        else:
+            self.sock = sock
+            print('sock is sock')#is this ever used?
 
-def getOrder():
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock.bind((socket.gethostbyname(socket.gethostname()), 10000))
-	sock.listen(1)
-	print('Waiting for ML Server orders...')
-	connection, client_address = sock.accept()
-	get = connection.recv(4096)
-	print('Order from ML Server: '+str(get))#TODO remove the b'1'
-	return get
+    def send(self, msg):
+        self.conn.sendall(msg.encode())
 
-def arduino(order):#I wand to get everything working, then do the arduino so debuging is simple
+    def listen(self):
+        while True:
+            data = self.conn.recv(1024)
+            data = data.decode()
+            if data != '':#if something was received
+                return data#only exit of the loop/ function
+
+def arduino(order):#I wand to get everything working, then do the arduino so debuging so problems are simple
 	print('Arduino order: '+str(order))#delete later
 
-def runAll():
-	mainMode = inputScrubber('\nSelect an option:\n  (1)Train NN\n  (2)Run NN\n  (3)RC mode\nEnter [1,2,3]: ',('1','2','3'),'Invalid Input\n')
-	if mainMode == '1':#Train NN
-		if camSupport == False:
+def trainNN():
+	if camSupport == False:
 			continueCamQuestion = 'The camera is disabled, this will program use a random picture and will not save.\nContinue? [y,n]: '
 			continueCam = inputScrubber(continueCamQuestion,('y','n'),'Invalid Input\n')
 			if continueCam == 'n':
 				exit()#close the program
-		else:#if camera support is on
-			tdQuestion = 'Select an option:\n  (1) = forward\n  (2) = left\n  (3) = right\n  (4) = stop\n  (5) = other\nEnter [1,2,3,4,5]: '
-			trainDirection = inputScrubber(tdQuestion, ('1','2','3','4','5'),'Invalid Input\n')#used a var because it was too long
-			if trainDirection == '1':
-				filepathEnd = 'forward'
-			elif trainDirection == '2':
-				filepathEnd = 'turnLeft'
-			elif trainDirection == '3':
-				filepathEnd = 'turnRight'
-			elif trainDirection == '4':
-				filepathEnd = 'stop'
-			elif trainDirection == '5':
-				filepathEnd = 'other'
-			trainSaveFilepathPrefix = ''#if prefix is disabled, it is nothing
-			trainPrefixQuestion = inputScrubber('Would you like to use an image prefix? [y,n]: ',('y','n'),'InvalidInput\n')
-			if trainPrefixQuestion == 'y':
-				trainSaveFilepathPrefix = input('Enter a prefix: ')
-			input('Press CTRL-C to quit taking pictures\nPress ENTER to continue')
-			print('Starting...')
-			while True:
-				piCam('/'+filepathEnd+'/'+trainSaveFilepathPrefix+filepathEnd)#where and what the file is called
-		if camSupport == False:
 			while True:
 				piCam(None)#makes a random picture
-				time.sleep(.5)
-	if mainMode == '2':#Run NN
-		global serverAddress
-		tfAddr = input('Is Tensorflow at '+serverAddress+'?\n  If so, Press ENTER\n  If not, Enter the correct address :')
-		if tfAddr != '':#if the user only pressed enter
-			serverAddress = tfAddr
-			if camSupport == False:
-				runCamQuestion = 'The camera is disabled, this will program use a random picture and will not save.\nContinue? [y,n]: '
-				runInput = inputScrubber(runCamQuestion,('y','n'),'Invalid Input\n')
-				if runInput == 'n':
-					exit()
-				else:#if it is ok to use a random image
-				while True:
-					input('Press CTRL-C to quit driving\nPress ENTER to continue\n')
-					image = piCam(None)
-					sendImg(serverAddress, image)
-					mlOrder = getOrder()
-					arduino(mlOrder)
-			else:#if camSupport is true
-				while True:
-					input('Press CTRL-C to quit driving\nPress ENTER to continue\n')
-					image = piCam('/run')
-					sendImg(serverAddress, image)
-					mlOrder = getOrder()
-					arduino(mlOrder)
-	if mainMode == '3':#RC mode
-		print('List of commands:\n(WASD)\n  w-forward\n  a-left\n  d-right\n  s-stop\nUse CTRL-C to exit\n')
+	else:#if camera support is true
+		tdQuestion = 'Select an option:\n  (1) = forward\n  (2) = left\n  (3) = right\n  (4) = stop\n  (5) = other\nEnter [1,2,3,4,5]: '
+		trainDirection = inputScrubber(tdQuestion, ('1','2','3','4','5'),'Invalid Input\n')#used a var because str was too long
+		if trainDirection == '1':
+			filepathEnd = 'forward'
+		elif trainDirection == '2':
+			filepathEnd = 'turnLeft'
+		elif trainDirection == '3':
+			filepathEnd = 'turnRight'
+		elif trainDirection == '4':
+			filepathEnd = 'stop'
+		elif trainDirection == '5':
+			filepathEnd = 'other'
+		trainSaveFilepathPrefix = ''#if prefix is disabled, it is nothing
+		trainPrefixQuestion = inputScrubber('Would you like to use an image prefix? [y,n]: ',('y','n'),'InvalidInput\n')
+		if trainPrefixQuestion == 'y':
+			trainSaveFilepathPrefix = input('Enter a prefix: ')
+		input('Press CTRL-C to quit taking pictures\nPress ENTER to continue')
+		print('Starting...')
 		while True:
-			RCdirection = inputScrubber('Enter [w,a,s,d]: ', ('w','a','s','d'), 'Invalid Input')
-			if RCdirection == 'w':
-				arduino(0)#forward
-			elif RCdirection == 'a':
-				arduino(1)#left
-			elif RCdirection == 's':
-				arduino(2)#right
-			elif RCdirection == 'd':
-				arduino(3)#stop
+			piCam('/'+filepathEnd+'/'+trainSaveFilepathPrefix+filepathEnd)#where and what the file is called
+
+def runNN():
+	global NetworkHost
+	imageFilepath = '/run'
+	tfAddr = input('Is Tensorflow at '+NetworkHost+'?\n  If so, Press ENTER\n  If not, Enter the correct address :')
+	if tfAddr != '':#if the user typed a new ip
+		NetworkHost = tfAddr
+	net = NetworkServer()#Waits for a connection to the ML program
+	if camSupport == False:
+		runCamQuestion = 'The camera is disabled, this will program use a random picture and will not save.\nContinue? [y,n]: '
+		runInput = inputScrubber(runCamQuestion,('y','n'),'Invalid Input\n')
+		if runInput == 'n':
+			exit()
+		imageFilepath = None#uses a random picture and does not save
+	input('Press CTRL-C to quit driving\nPress ENTER to continue\n')
+	while True:
+		img = piCam(imageFilepath)
+		net.send(img)
+		order = net.listen()
+		arduino(order)
+
+def remoteControl():
+	print('List of commands:\n(WASD)\n  w-forward\n  a-left\n  d-right\n  s-stop\nUse CTRL-C to exit\n')
+	while True:
+		RCdirection = inputScrubber('Enter [w,a,s,d]: ', ('w','a','s','d'), 'Invalid Input')
+		if RCdirection == 'w':
+			arduino(0)#forward
+		elif RCdirection == 'a':
+			arduino(1)#left
+		elif RCdirection == 's':
+			arduino(2)#right
+		elif RCdirection == 'd':
+			arduino(3)#stop
+
+def Main():
+	mainMode = inputScrubber('Select an option:\n  (1)Train NN\n  (2)Run NN\n  (3)RC mode\nEnter [1,2,3]: ', ('1','2','3'), 'Invalid Input\n')
+	if mainMode == '1':
+		trainNN()
+	elif mainMode == '2':
+		runNN()
+	elif mainMode == '3':
+		remoteControl()
+
+
+if __name__ == "__main__":
+Main()
