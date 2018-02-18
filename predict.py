@@ -10,7 +10,7 @@ import time
 import pickle
 import socket
 
-NetworkHost = '192.168.1.102'#change to the IP address of the car
+NetworkHost = '192.168.1.102'
 NetworkPort = 59281
 
 img_width, img_height = 320, 180
@@ -37,67 +37,8 @@ def create_model():
 
 	return model
 
-def sendOrder(order):
-	global carIpAddress
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	try: 
-		server_address = (carIpAddress, 10000)
-		print('server address: ', server_address)
-	except:
-		print('did not get server_address')
-	print('Connecting to the car')# use this for the IP on the tensorflow side
-	try:
-		try:
-			sock.connect(server_address)
-		except: 
-			print('failed at .connect')
-			print('Could not send order to the car')
-			sendOrder(bestclass)
-		try:
-			sendorder = str(bestclass).encode()
-		except:
-			print('failed at .encode')
-			print('Could not send order to the car')
-		try:
-			sock.send(sendorder)
-			print('Order sent to the car')
-		except:
-			print('failed at .send')
-			print('Could not send order to the car')
-	except OSError:
-		print('Could not send order to the car')
-		time.sleep(.1)
-		
-def getImage():
-	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	server_address = (socket.gethostbyname(socket.gethostname()), 10000)
-	try:
-		sock.bind(server_address)
-	except OSError:
-		time.sleep(.5)
-		print('ERROR socket.bind')
-		getImage()
-	sock.listen(1)
-	print('Waiting for image...')
-	while True:
-		try:
-			connection, carIpAddress = sock.accept()
-		except OSError:
-			time.sleep(.5)
-			print('ERROR accept')
-			getImage()
-		get = b''
-		while True:
-			packet = connection.recv(4096)
-			if not packet: break
-			get += packet
-		end = pickle.loads(get)
-		return end
-
-NetworkPort = 59281
-
 class NetworkClient:#run on ML /remote computer
-    def __init__(self, sock=None, host=NetworkHost, port=NetworkHost):
+    def __init__(self, sock=None, host=NetworkHost, port=NetworkPort):
         if sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((NetworkHost, NetworkPort))
