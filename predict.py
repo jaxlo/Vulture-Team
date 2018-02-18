@@ -10,8 +10,10 @@ import time
 import pickle
 import socket
 
+NetworkHost = '192.168.1.102'#change to the IP address of the car
+NetworkPort = 59281
+
 img_width, img_height = 320, 180
-carIpAddress = '192.168.1.102'#change to the IP address of your car
 bestclass = -1
 
 def create_model():
@@ -66,7 +68,6 @@ def sendOrder(order):
 		print('Could not send order to the car')
 		time.sleep(.1)
 		
-
 def getImage():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	server_address = (socket.gethostbyname(socket.gethostname()), 10000)
@@ -93,6 +94,28 @@ def getImage():
 		end = pickle.loads(get)
 		return end
 
+NetworkPort = 59281
+
+class NetworkClient:#run on ML /remote computer
+    def __init__(self, sock=None, host=NetworkHost, port=NetworkHost):
+        if sock is None:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.connect((NetworkHost, NetworkPort))
+        	print('Connected to: '+NetworkHost+ ' on port: '+str(NetworkPort))
+        else:
+            self.sock = sock
+
+    def send(self, msg):#used for sending orders
+        self.sock.sendall(msg.encode())#sendall only stops sending when everything is sent
+
+    def listen(self):#used for getting images
+        final = ''#try the "final += data" trick if it errors
+        while True:
+            data = self.sock.recv(1024)
+            data = data.decode()
+            if data != '':#if something was received
+                return data#only exit for the loop/ function
+
 def pred():
 	global image, img_width, img_height, bestclass
 	img = image
@@ -111,9 +134,13 @@ def pred():
 	print ('I think this road is ' + str(bestclass) + ' with ' + str(bestconf * 100) + '% confidence.')
 	return bestclass
 
-print('Starting...')
+def Main():
+	print('Starting...')
+	net = NetworkClient()#makes the "net" object and connects to the server
+	while True:
+		image = net.listen()
+		pred()
+		net.send(bestclass)
 
-while True:
-	image = getImage()
-	pred()
-	sendOrder(bestclass)
+if __name__ == "__main__":
+	Main()
