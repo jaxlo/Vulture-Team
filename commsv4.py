@@ -1,9 +1,7 @@
-#Made for Python 3, By Jackson Lohman and TJ Reynolds
+#Made for Python 3.6, By Jackson Lohman and TJ Reynolds
 #To be run by a Raspberry Pi on an RC car
 
-NetworkHost = '192.168.1.102'#Where the ML server is on the local network
-
-#global variables
+NetworkPort = 59281
 imgCounter = 0
 
 def inputScrubber(inputStr, optionTuple, errorStr):#optionTuple needs to be a str
@@ -97,8 +95,59 @@ class NetworkServer:#run on the pi
             if data != '':#if something was received
                 return data#only exit of the loop/ function
 
-def arduino(order):#I wand to get everything working, then do the arduino so debuging so problems are simple
-	print('Arduino order: '+str(order))#delete later
+class Arduino:
+	def __init__(self, ser=None):
+		if arduinoSupport == False:
+			print('Fake echo Arduino connected')
+			return#exits function
+		serialConnection = False
+		while serialConnection == False:
+			counter = 0
+			while True:
+				try:
+					self.ser = serial.Serial('/dev/ttyACM'+str(counter), 9600)
+				except OSError:#if it cannot find the filepath
+					counter += 1
+				else:#runs if there are no exceptions in the try
+					serialConnection = True
+					print('Arduino is at: /dev/ttyACM'+str(counter))
+					time.sleep(2)#Give the arduino time to reset
+					break#exits counting loop
+				if counter == 11:#where the program stopps looking for the arduino
+					counter = 0
+					print('Arduino not found\n  Will try again in 3s')#when the while loop is over
+					time.sleep(3)
+
+	def sendPwm(self, pwmA, pwmB):
+		if arduinoSupport == False:
+			print('Echo Arduino PWM_A: '+str(pwmA)+', pwmB: '+str(pwmB))
+			return#exits function
+		pwm = ('<sd, '+str(pwmA)+', '+str(pwmB)+'>')
+		pwmmbytes = str.encode(pwm)
+		self.ser.write(pwmmbytes)#send the data to the arduino
+		#self.ser.flushOutput() renamed in docs
+
+	def sendOrder(self, order):#converts the order to pwm and uses sendPwm to send it to the Arduino
+		#pwmA is the left and pwmB is the right
+		if order == 0:#forward
+			pwmA = 255
+			pwmB = 255
+			print('Moving Forward...')
+		elif order == 1:#turn left
+			pwmA = 0
+			pwmB = 255
+			print('Turning Left...')
+		elif order == 2:#turn right
+			pwmA = 255
+			pwmB = 0
+			print('Turning Right...')
+		elif order == 3:#stop
+			pwmA = 0
+			pwmB = 0
+			print('Stopping..')
+		else:#this should not run
+			raise Exception('Not a valid command\nUse int 0-3')
+		self.sendPwm(pwmA, pwmB)
 
 def trainNN():
 	if camSupport == False:
@@ -131,11 +180,7 @@ def trainNN():
 			piCam('/'+filepathEnd+'/'+trainSaveFilepathPrefix+filepathEnd)#where and what the file is called
 
 def runNN():
-	global NetworkHost
-	imageFilepath = '/run'
-	tfAddr = input('Is Tensorflow at '+NetworkHost+'?\n  If so, Press ENTER\n  If not, Enter the correct address :')
-	if tfAddr != '':#if the user typed a new ip
-		NetworkHost = tfAddr
+	ardu = Arduino()#takes 2 seconds to connect (waiting for the arduino to restart with USB connection)
 	net = NetworkServer()#Waits for a connection to the ML program
 	if camSupport == False:
 		runCamQuestion = 'The camera is disabled, this will program use a random picture and will not save.\nContinue? [y,n]: '
@@ -148,20 +193,21 @@ def runNN():
 		img = piCam(imageFilepath)
 		net.send(img)
 		order = net.listen()
-		arduino(order)
+		ardu.sendOrder(order)
 
 def remoteControl():
+	ardu = Arduino()
 	print('List of commands:\n(WASD)\n  w-forward\n  a-left\n  d-right\n  s-stop\nUse CTRL-C to exit\n')
 	while True:
 		RCdirection = inputScrubber('Enter [w,a,s,d]: ', ('w','a','s','d'), 'Invalid Input')
 		if RCdirection == 'w':
-			arduino(0)#forward
+			ardu.sendOrder(0)#forward
 		elif RCdirection == 'a':
-			arduino(1)#left
-		elif RCdirection == 's':
-			arduino(2)#right
+			ardu.sendOrder(1)#left
 		elif RCdirection == 'd':
-			arduino(3)#stop
+			ardu.sendOrder(2)#right
+		elif RCdirection == 's':
+			ardu.sendOrder(3)#stop
 
 def Main():
 	mainMode = inputScrubber('Select an option:\n  (1)Train NN\n  (2)Run NN\n  (3)RC mode\nEnter [1,2,3]: ', ('1','2','3'), 'Invalid Input\n')
@@ -174,4 +220,4 @@ def Main():
 
 
 if __name__ == "__main__":
-Main()
+	Main()
