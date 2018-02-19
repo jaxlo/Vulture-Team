@@ -20,15 +20,16 @@ print('                    By Jackson Lohman and TJ Reynolds\n')
 print('Starting...')
 try:
 	from picamera import PiCamera
+	picam = PiCamera()
 	picam.resolution = (320,320)#run now to give it time to load
 	camSupport = True
 	print('Pi Camera Enabled')
-except ModuleNotFoundError:
+except ImportError:
 	camSupport = False
 	print('Pi Camera Disabled')
 try:
 	import serial
-except ModuleNotFoundError:
+except ImportError:
 	arduinoSupport = False
 	print('Arduino Disabled')
 else:
@@ -48,7 +49,7 @@ import sys
 import os
 
 def piCam(filepath):#filepath = None if it should make a random picture -- Example: piCam('/run/someDirectionForAName') -- (do not add .jpg)
-	global imgCounter#to use outside of the program, make a global var 0 
+	global imgCounter#to use outside of the program, make a global var 0
 	imgCounter += 1#incraments before the picture. It starts counting with 1
 	if filepath != None:
 		currentImg = str(filepath)+str(imgCounter)+'.jpg'#adds image number and filepath
@@ -73,7 +74,7 @@ class NetworkServer:#run on the pi
             self.sock.listen(1)#limit connection to one client
             print('Waiting for the ML client')
             self.conn, addr = self.sock.accept()
-            print('New connection from: [add later]')#+str(self.sock.getpeername()))
+            print('Successfully connected to the client.')
         else:
             self.sock = sock
             print('sock is sock')#is this ever used?
@@ -170,11 +171,12 @@ def trainNN():
 		input('Press CTRL-C to quit taking pictures\nPress ENTER to continue')
 		print('Starting...')
 		while True:
-			piCam('/'+filepathEnd+'/'+trainSaveFilepathPrefix+filepathEnd)#where and what the file is called
+			piCam('MLtrain'+'/'+filepathEnd+'/'+trainSaveFilepathPrefix+filepathEnd)#where and what the file is called
 
 def runNN():
 	ardu = Arduino()#takes 2 seconds to connect (waiting for the arduino to restart with USB connection)
 	net = NetworkServer()#Waits for a connection to the ML program
+	imageFilepath = 'MLtrain/run'
 	if camSupport == False:
 		runCamQuestion = 'The camera is disabled, this will program use a random picture and will not save.\nContinue? [y,n]: '
 		runInput = inputScrubber(runCamQuestion,('y','n'),'Invalid Input\n')
@@ -192,15 +194,19 @@ def remoteControl():
 	ardu = Arduino()
 	print('List of commands:\n(WASD)\n  w-forward\n  a-left\n  d-right\n  s-stop\nUse CTRL-C to exit\n')
 	while True:
-		RCdirection = inputScrubber('Enter [w,a,s,d]: ', ('w','a','s','d'), 'Invalid Input')
-		if RCdirection == 'w':
-			ardu.sendOrder(0)#forward
-		elif RCdirection == 'a':
-			ardu.sendOrder(1)#left
-		elif RCdirection == 'd':
-			ardu.sendOrder(2)#right
-		elif RCdirection == 's':
+		try:
+			RCdirection = inputScrubber('Enter [w,a,s,d]: ', ('w','a','s','d'), 'Invalid Input')
+			if RCdirection == 'w':
+				ardu.sendOrder(0)#forward
+			elif RCdirection == 'a':
+				ardu.sendOrder(1)#left
+			elif RCdirection == 'd':
+				ardu.sendOrder(2)#right
+			elif RCdirection == 's':
+				ardu.sendOrder(3)#stop
+		except KeyboardInterrupt:#if the user exits
 			ardu.sendOrder(3)#stop
+			exit()
 
 def Main():
 	mainMode = inputScrubber('Select an option:\n  (1)Train NN\n  (2)Run NN\n  (3)RC mode\nEnter [1,2,3]: ', ('1','2','3'), 'Invalid Input\n')
