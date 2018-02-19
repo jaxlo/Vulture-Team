@@ -5,19 +5,12 @@ NetworkPort = 59281
 imgCounter = 0
 
 def inputScrubber(inputStr, optionTuple, errorStr):#optionTuple needs to be a str
-	responce = input(inputStr)
-	x = 0
-	while x <= len(optionTuple):
-		try:
-			if optionTuple[x] == responce:
-				return responce
-			else:
-				x += 1
-		except IndexError:#If the tuple runs out of places to index`
-			x = len(optionTuple) +1
-	if errorStr != 'NOERRORSTR':#make  errorStr == NOERRORSTR for there to be no error strings
+	while True:#can only exit the loop if there is a valid input
+		responce = input(inputStr)
+		for item in optionTuple:
+			if item == responce:
+				return responce#only exit
 		print(errorStr)
-		inputScrubber(inputStr, optionTuple, errorStr)
 
 print(' _____     _ _                   _____               ')
 print('|  |  |_ _| | |_ _ _ ___ ___ ___|_   _|___ ___ ___ __')
