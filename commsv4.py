@@ -1,6 +1,7 @@
 #Made for Python 3.6, By Jackson Lohman and TJ Reynolds
 #To be run by a Raspberry Pi on an RC car
 
+NetworkHost = '192.168.1.103'
 NetworkPort = 59281
 imgCounter = 0
 
@@ -66,28 +67,17 @@ def piCam(filepath):#filepath = None if it should make a random picture -- Examp
 		print('Image :'+str(imgCounter)+' made.')
 	return pixels
 
-class NetworkServer:#run on the pi
-    def __init__(self, sock=None, port=NetworkPort):
-        if sock is None:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.bind(('', NetworkPort))#allow any ip
-            self.sock.listen(1)#limit connection to one client
-            print('Waiting for the ML client')
-            self.conn, addr = self.sock.accept()
-            print('Successfully connected to the client.')
-        else:
-            self.sock = sock
-            print('sock is sock')#is this ever used?
-
-    def send(self, msg):
-        self.conn.sendall(msg.encode())
-
-    def listen(self):
-        while True:
-            data = self.conn.recv(1024)
-            data = data.decode()
-            if data != '':#if something was received
-                return data#only exit of the loop/ function
+def network(image):
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+		sock.connect((NetworkHost, NetworkPort))
+		tosend = pickle.dumps(image, protocol = 0)
+		sock.sendall(tosend)
+		sock.shutdown(socket.SHUT_WR)
+		print('Image Sent')
+		data = sock.recv(1024)
+	print('Received: ', str(data.decode()))
+	sock.close()
+	return str(data.decode())
 
 class Arduino:
 	def __init__(self, ser=None):
@@ -122,6 +112,7 @@ class Arduino:
 		#self.ser.flushOutput() renamed in docs
 
 	def sendOrder(self, order):#converts the order to pwm and uses sendPwm to send it to the Arduino
+		order = int(order)
 		#pwmA is the left and pwmB is the right
 		if order == 0:#forward
 			pwmA = 255
@@ -175,7 +166,6 @@ def trainNN():
 
 def runNN():
 	ardu = Arduino()#takes 2 seconds to connect (waiting for the arduino to restart with USB connection)
-	net = NetworkServer()#Waits for a connection to the ML program
 	imageFilepath = 'MLtrain/run'
 	if camSupport == False:
 		runCamQuestion = 'The camera is disabled, this will program use a random picture and will not save.\nContinue? [y,n]: '
@@ -186,8 +176,7 @@ def runNN():
 	input('Press CTRL-C to quit driving\nPress ENTER to continue\n')
 	while True:
 		img = piCam(imageFilepath)
-		net.send(img)
-		order = net.listen()
+		order = network(img)
 		ardu.sendOrder(order)
 
 def remoteControl():
