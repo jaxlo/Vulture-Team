@@ -11,10 +11,12 @@ import time
 import pickle
 import socket
 
+
 img_width, img_height = 320, 180
 bestclass = -1
 NetworkPort = 59281
 final2 = ''
+
 
 def create_model(): #this defines the layers that will be used to process the image. They are the same ones that are used in training.
 	model = Sequential()
@@ -37,15 +39,13 @@ def create_model(): #this defines the layers that will be used to process the im
 
 	return model
 
-#need to put new network here... using pickle to send not send it over socket
-
 
 def pred(var): #This is where the NN actually does the prediction
 	global img_width, img_height, bestclass
 	img = var
 	img.resize(img_width, img_height)
 	model = create_model()
-	keras.models.load_model('C:\\Users\\reyno\\FirstDatasetv1\\FirstDatasetv1.h5')
+	keras.models.load_model('C:\\Users\\reyno\\04262018.h5')
 	arr = np.array(img).reshape((img_width,img_height,1))
 	arr = np.expand_dims(arr, axis=0)
 	prediction = model.predict(arr)[0]
@@ -66,7 +66,6 @@ def network():
 	print('Listening for Connection...')
 	conn, addr = sock.accept()
 	print('connected to' + str(addr))
-
 	final = b''
 	while True:
 		data = conn.recv(1024)
@@ -84,6 +83,7 @@ def network():
 	return final2
 
 
+
 print('Starting...')
 print(' _____     _ _                   _____               ')
 print('|  |  |_ _| | |_ _ _ ___ ___ ___|_   _|___ ___ ___ __')
@@ -93,3 +93,4 @@ print('                    By Jackson Lohman and TJ Reynolds\n')
 
 while True:
 	network()
+
