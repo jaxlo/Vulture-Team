@@ -1,3 +1,4 @@
+# NOTE: '#' is used to mask personal information
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
@@ -25,16 +26,16 @@ batch_size = 50
 epochs = 10
 
 def findUserSlash():
-	user = str(input('Who are you? (For the correct filepath)\n  (1)TJ\n  (2)Jackson\n  (3)Kevin\nEnter [1,2,3]: '))
+	user = str(input('Who are you? (For the correct filepath)\n  (1)##\n  (2)#######\n  (3)#####\nEnter [1,2,3]: '))
 	if user == '1':#lower confusing errors if the input is invalid later
 		slash = '\\'
-		print('Hello, TJ\nSlash: '+slash)
+		print('Hello, ##\nSlash: '+slash)
 	elif user == '2':
 		slash = '/'#linux is better lol (yet tensorflow(running in backgrund) is optimized for windows, lol)
-		print('Hello, Jackson\nSlash: '+slash)
+		print('Hello, #######\nSlash: '+slash)
 	elif user == '3':#lower confusing errors if the input is invalid later
 		slash = '\\'
-		print('Hello, Kevin\nSlash: '+slash)
+		print('Hello, #####\nSlash: '+slash)
 	else:
 		print('Invalid Input\n')
 		findUserSlash()
@@ -46,13 +47,13 @@ def loadImgs():
 	user, slash = findUserSlash()
 	print(user, slash)
 	if slash == '\\' and user == '1':
-		filepath = 'C:\\Users\\reyno\\Downloads\\finalTrainingData\\finalTrainingData\\format12-11-17'
+		filepath = 'C:\\Users\\#####\\Downloads\\finalTrainingData\\finalTrainingData\\format12-11-17'
 		print(filepath)
 	elif slash == '\\' and user == '3':
 		filepath = ''
 		print(filepath)
 	else:
-		filepath = '/run/media/jax/DualOS/CompSci/finalCar/formattedData/format11-4-17'
+		filepath = '/run/media/###/DualOS/CompSci/finalCar/formattedData/format11-4-17'
 		print(filepath)
 		
 	imageFilepathSections = (slash+'forward',slash+'turnLeft',slash+'turnRight',slash+'stop',slash+'trainRandom')
