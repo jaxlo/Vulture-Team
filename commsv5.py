@@ -1,4 +1,5 @@
-#Made for Python 3.6, By Jackson Lohman and TJ Reynolds
+# NOTE: '#' is used to mask personal information
+#Made for Python 3.6, By ####### ###### and ## ########
 #To be run by a Raspberry Pi on an RC car
 
 NetworkHost = '192.168.1.103'
@@ -13,11 +14,11 @@ def inputScrubber(inputStr, optionTuple, errorStr):#optionTuple needs to be a st
 				return responce#only exit
 		print(errorStr)
 
-print(' _____     _ _                   _____               ')
-print('|  |  |_ _| | |_ _ _ ___ ___ ___|_   _|___ ___ ___ __')
-print('|  |  | | | |  _| | |  _| -_|___| | | | -_| . |     |')
-print(' \___/|___|_|_| |___|_| |___|     |_| |___|__,|_|_|_|')
-print('                    By Jackson Lohman and TJ Reynolds\n')
+print('#####################################################')
+print('#####################################################')
+print('#####################################################')
+print('#####################################################')
+print('                    By ####### ###### and ## ########\n')
 print('Starting...')
 try:
 	from picamera import PiCamera
@@ -81,7 +82,7 @@ def network(image):
 
 class Arduino:
 	def __init__(self, ser=None):
-		if arduinoSupport == False:
+		if arduinoSupport == False:#if programming it on a laptop, it can be tested without the arduino
 			print('Fake echo Arduino connected')
 			return#exits function
 		serialConnection = False
@@ -130,7 +131,7 @@ class Arduino:
 			pwmA = 0
 			pwmB = 0
 			print('Stopping..')
-		else:#this should not run
+		else:#Break point to debug errors
 			raise Exception('Not a valid command\nUse int 0-3')
 		self.sendPwm(pwmA, pwmB)
 
