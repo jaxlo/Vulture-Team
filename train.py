@@ -14,6 +14,13 @@ import time
 import pickle
 import socket
 
+print('Starting...')
+print(' _____     _ _                   _____               ')
+print('|  |  |_ _| | |_ _ _ ___ ___ ___|_   _|___ ___ ___ __')
+print('|  |  | | | |  _| | |  _| -_|___| | | | -_| . |     |')
+print(' \___/|___|_|_| |___|_| |___|     |_| |___|__,|_|_|_|')
+print('                    By Jackson Lohman and TJ Reynolds\n')
+
 x_train = np.array([])
 y_train = []
 x_test = np.array([])
@@ -25,16 +32,13 @@ batch_size = 50
 epochs = 10
 
 def findUserSlash():
-	user = str(input('Who are you? (For the correct filepath)\n  (1)TJ\n  (2)Jackson\n  (3)Kevin\nEnter [1,2,3]: '))
+	user = str(input('Who are you? (For the correct filepath)\n  (1)TJ\n  (2)Jackson\nEnter [1,2]: '))
 	if user == '1':#lower confusing errors if the input is invalid later
 		slash = '\\'
 		print('Hello, TJ\nSlash: '+slash)
 	elif user == '2':
 		slash = '/'#linux is better lol (yet tensorflow(running in backgrund) is optimized for windows, lol)
 		print('Hello, Jackson\nSlash: '+slash)
-	elif user == '3':#lower confusing errors if the input is invalid later
-		slash = '\\'
-		print('Hello, Kevin\nSlash: '+slash)
 	else:
 		print('Invalid Input\n')
 		findUserSlash()
@@ -46,20 +50,17 @@ def loadImgs():
 	user, slash = findUserSlash()
 	print(user, slash)
 	if slash == '\\' and user == '1':
-		filepath = 'C:\\Users\\reyno\\Downloads\\finalTrainingData\\finalTrainingData\\format12-11-17'
-		print(filepath)
-	elif slash == '\\' and user == '3':
-		filepath = ''
+		filepath = 'E:\\BlueNew'
 		print(filepath)
 	else:
 		filepath = '/run/media/jax/DualOS/CompSci/finalCar/formattedData/format11-4-17'
 		print(filepath)
 		
-	imageFilepathSections = (slash+'forward',slash+'turnLeft',slash+'turnRight',slash+'stop',slash+'trainRandom')
+	imageFilepathSections = (slash+'forward',slash+'test')
 	imageDirectoryFilepath = filepath
 	appendCountTrain = 0
 	appendCountTest = 0
-	#x_train = np.array([])
+
 	for folder in imageFilepathSections:
 		currentFileFolder = (imageDirectoryFilepath+folder)#loops through each folder
 		for pic in glob.glob(currentFileFolder+slash+'*.jpg'):
@@ -67,18 +68,17 @@ def loadImgs():
 			pixels = np.array(loadImg, dtype=np.float32)
 			pixels /= 255#makes it 0-1 and it is faster
 			#print(pixels)
-			if folder != (slash+'trainRandom'):
+			if folder != (slash+'test'):
 				if appendCountTrain != 0:
 					#x_train += pixels
 					x_train = np.append(x_train, pixels)
 				else:
 					x_train = pixels
 				if folder == slash+'forward': y_train += [0]
-				elif folder == slash+'turnLeft': y_train += [1]
-				#elif folder == slash+'turnRight': y_train += [2]
-				#elif folder == slash+'stop': y_train += [3]
+				elif folder == slash+'left': y_train += [1]
 				appendCountTrain += 1
-			if folder == slash+'trainRandom':
+
+			if folder == slash+'test':
 				if appendCountTest != 0:
 					x_test = np.append(x_test, pixels)
 				else:
@@ -89,13 +89,6 @@ def loadImgs():
 				
 				elif pic.find('left') >= 0  or pic.find('Left') >= 0:
 					y_test += [1]
-					#print('left')
-				#elif pic.find('right') >= 0 or pic.find('Right') >= 0:
-					#y_test += [2]
-					#print('right')
-				#elif pic.find('stop') >= 0:
-					#y_test += [3]
-					#print('stop')
 				appendCountTest += 1
 				#put similar code here when finished with the train
 		print('Loaded: '+folder.strip(slash)+' Images')
@@ -146,4 +139,5 @@ model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
 score = model.evaluate(x_test, y_test, batch_size=batch_size)
 print(score)
 
-model.save('FirstDatasetv1.h5')#change to match what we are saving
+model.save('04262018.h5')#change to match what we are saving
+
