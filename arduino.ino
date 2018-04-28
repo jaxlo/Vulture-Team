@@ -6,7 +6,7 @@
 #define in3 6
 #define in4 7
 
-//ultrasonic distance
+//ultrasonic distance (not used in the final version due to time)
 #define trig 11
 #define echo 3
 
@@ -27,9 +27,6 @@ boolean newData = false;
 bool newSpeed = false;//starts stopped --- change to true if you want it to go without the Raspberry Pi
 bool ultrasonic = false;//if the ultrasonic distance sensor is enabled or not
 
-//For some reason, backing up does not work 100%. 
-//TODO add weather to take true or false to turn on or off the distance sensor
-
 void setup() {
 
 //motor driver
@@ -46,7 +43,7 @@ void setup() {
   
 //USB connection
   Serial.begin(9600);
-  Serial.println("Enter data in this style <HelloWorld, 12, 24.7>  ");
+  Serial.println("Enter data in this style <Text, 12, 24.7>  ");
 }
 
 void loop() {
@@ -54,21 +51,20 @@ void loop() {
   recvWithStartEndMarkers();
   if (newData == true) {
     strcpy(tempChars, receivedChars);
-    // this temporary copy is necessary to protect the original data
-    //   because strtok() used in parseData() replaces the commas with \0
+    // because strtok() used in parseData() replaces the commas with \0
     parseData();
     //showParsedData();
     newData = false;
     newSpeed = true;    
-    Serial.println(serialPwmA);//remove
-    Serial.println(serialPwmB);//remove
+    Serial.println(serialPwmA);
+    Serial.println(serialPwmB);
   }
 
   if (newSpeed == true){
     
     if (serialPwmA > 0) {
        digitalWrite(in1, HIGH);//ajust this for direction (swap high and low)
-       digitalWrite(in2, LOW);//
+       digitalWrite(in2, LOW);
     } else if (serialPwmA < 0) {//negative PWM means that the motors go backwords
       digitalWrite(in2, LOW);
       digitalWrite(in2, HIGH);
@@ -85,8 +81,8 @@ void loop() {
     newSpeed = false;//change to false after testing
   }
   //This needs to run every time to  keep PWM
-  analogWrite(enA, abs(serialPwmA)); // Send PWM signal to motor A
-  analogWrite(enB, abs(serialPwmB)); // Send PWM signal to motor B
+  analogWrite(enA, abs(serialPwmA));// Send PWM signal to motor A
+  analogWrite(enB, abs(serialPwmB));// Send PWM signal to motor B
 
 
   //if (ultrasonic == true)
@@ -103,6 +99,7 @@ void loop() {
 }
 
 //functions moded from Robin2 on the arduino forums
+//https://forum.arduino.cc/index.php?topic=288234.0
 void recvWithStartEndMarkers() {
     static boolean recvInProgress = false;
     static byte ndx = 0;
@@ -122,7 +119,7 @@ void recvWithStartEndMarkers() {
                 }
             }
             else {
-                receivedChars[ndx] = '\0'; // terminate the string
+                receivedChars[ndx] = '\0';// terminate the string
                 recvInProgress = false;
                 ndx = 0;
                 newData = true;
@@ -140,13 +137,13 @@ void parseData() {// split the data into its parts
 
     char * strtokIndx; // this is used by strtok() as an index
 
-    strtokIndx = strtok(tempChars,",");      // get the first part - the string
-    strcpy(messageFromPC, strtokIndx); // copy it to messageFromPC
+    strtokIndx = strtok(tempChars,",");// get the first part - the string
+    strcpy(messageFromPC, strtokIndx);// copy it to messageFromPC
  
-    strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
-    serialPwmA = atoi(strtokIndx);     // convert this part to an integer
+    strtokIndx = strtok(NULL, ",");// this continues where the previous call left off
+    serialPwmA = atoi(strtokIndx);// convert this part to an integer
 
     strtokIndx = strtok(NULL, ",");
-    serialPwmB = atoi(strtokIndx);     // convert this part to an intager (was float)
+    serialPwmB = atoi(strtokIndx);// convert this part to an intager (was float)
 
 } 
