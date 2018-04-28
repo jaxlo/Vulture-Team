@@ -1,13 +1,14 @@
+# NOTE: '#' is used to mask personal information
 from PIL import Image
 import numpy as np
 import glob
 import os
 
-filepathToConvert = '/run/media/jax/DualOS/CompSci/finalCar/mlTrain11-4-17/all/turnLeft/'
-filepathEnd = '/home/jax/Documents/BluescaleImages/turnLeft/'
+filepathToConvert = '/run/media/###/DualOS/CompSci/finalCar/mlTrain11-4-17/all/turnLeft/'
+filepathEnd = '/home/###/Documents/BluescaleImages/turnLeft/'
 
 
-os.chdir("/run/media/jax/DualOS/CompSci/finalCar/mlTrain11-4-17/all/turnLeft/")
+os.chdir("/run/media/###/DualOS/CompSci/finalCar/mlTrain11-4-17/all/turnLeft/")
 for file in glob.glob('*.jpg'):
 	print(file)
 	currentImg = (str(filepathToConvert)+str(file))
