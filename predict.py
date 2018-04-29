@@ -1,3 +1,4 @@
+# NOTE: '#' is used to mask personal information
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
@@ -85,11 +86,12 @@ def network():
 
 
 print('Starting...')
-print(' _____     _ _                   _____               ')
-print('|  |  |_ _| | |_ _ _ ___ ___ ___|_   _|___ ___ ___ __')
-print('|  |  | | | |  _| | |  _| -_|___| | | | -_| . |     |')
-print(' \___/|___|_|_| |___|_| |___|     |_| |___|__,|_|_|_|')
-print('                    By Jackson Lohman and TJ Reynolds\n')
+
+print('#####################################################')
+print('#####################################################')
+print('#####################################################')
+print('#####################################################')
+print('                    By ####### ###### and ## ########\n')
 
 while True:
-	network()
+network()
